@@ -124,7 +124,7 @@
                   <goal>native-image</goal>
                 </goals>
                 <configuration>
-                  <enableHttpUrlHandler>true</enableHttpUrlHandler>
+                  <enableJni>true</enableJni>
                 </configuration>
               </execution>
             </executions>
