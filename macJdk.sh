@@ -7,4 +7,4 @@ export OUTPUT_KAFKA_TOPIC="modify.op.msgs"
 export APP_NAME="sns-incoming-operator-messages-converter4"
 export MODE="xlToJson"
 
-java -Xmx48M -jar ./target/xmlJsonConverter-1.0-SNAPSHOT-runner.jar
+java -Xmx48M -jar ./target/quarkusKafkaStreamsXmlJsonConverter-1.0-SNAPSHOT-runner.jar
