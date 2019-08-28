@@ -13,11 +13,11 @@ import org.apache.kafka.streams.kstream.ValueMapper;
 import java.util.Properties;
 import java.util.function.Function;
 
-class ConverterStream {
+abstract class ConverterStream {
 
     private final Properties streamingConfig;
 //    private final KafkaStreamsTracing kafkaStreamsTracing;
-    private ConverterConfiguration converterConfiguration;
+    protected ConverterConfiguration converterConfiguration;
     private String bootstrapServers;
     private KafkaStreams streams;
 
@@ -57,15 +57,6 @@ class ConverterStream {
         streams.close();
     }
 
-    Topology buildTopology() {
-        StreamsBuilder builder = new StreamsBuilder();
-        Function<String, String> xmlToJson = XmlJsonConverter::convertXmlToJson;
-        ValueMapper<String, String> xmlToJsonMapper = xmlString -> xmlToJson.apply(xmlString);
-        KStream<String, String> inputStream = builder.stream(converterConfiguration.inputKafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
-//        KStream<String, String> jsonStream = inputStream.transformValues(kafkaStreamsTracing.mapValues("xml_to_json", xmlToJsonMapper));
-        KStream<String, String> jsonStream = inputStream.mapValues(xmlToJsonMapper);
-                jsonStream.to(converterConfiguration.outputKafkaTopic);
-        return builder.build();
-    }
+    abstract Topology buildTopology();
 
 }
