@@ -195,8 +195,8 @@ public abstract class ConverterShould {
         return String.format(
                 "{" +
                         "  \"order\":{" +
-                        "    \"orderId\":%s," +
-                        "    \"randomValue\":%s" +
+                        "    \"orderId\":\"%s\"," +
+                        "    \"randomValue\":\"%s\"" +
                         "  }" +
                         "}",
                 orderId, randomValue
