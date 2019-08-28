@@ -19,7 +19,6 @@ class XmlJsonConverter {
 
     static String readXmlFieldFromJson(String field, String payload) {
         JSONObject json = new JSONObject(payload);
-        String xmlPayload = json.getString(field);
-        return xmlPayload;
+        return json.getString(field);
     }
 }
