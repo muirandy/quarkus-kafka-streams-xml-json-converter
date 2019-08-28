@@ -22,7 +22,7 @@ public class ConvertFromMqConnectorShould extends ConverterShould {
         Map<String, String> envProperties = new HashMap<>();
         envProperties.put("INPUT_KAFKA_TOPIC", getInputTopic());
         envProperties.put("OUTPUT_KAFKA_TOPIC", getOutputTopic());
-        envProperties.put("APP_NAME", this.getClass().getName());
+        envProperties.put("APP_NAME", "activeMqToJsonConverter");
         envProperties.put("MODE", "mqConnector");
         return envProperties;
     }

@@ -20,7 +20,7 @@ public class ConvertToJsonShould extends ConverterShould {
         Map<String, String> envProperties = new HashMap<>();
         envProperties.put("INPUT_KAFKA_TOPIC", getInputTopic());
         envProperties.put("OUTPUT_KAFKA_TOPIC", getOutputTopic());
-        envProperties.put("APP_NAME", this.getClass().getName());
+        envProperties.put("APP_NAME", "XmlToJsonConverter");
         envProperties.put("MODE", "xmlToJson");
         return envProperties;
     }
