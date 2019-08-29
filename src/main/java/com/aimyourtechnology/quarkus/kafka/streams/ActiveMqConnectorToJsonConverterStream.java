@@ -10,8 +10,8 @@ import org.json.JSONObject;
 
 import java.util.function.Function;
 
-public class ActiveMqConnectorToJsonConverterStream extends ConverterStream {
-    public ActiveMqConnectorToJsonConverterStream(ConverterConfiguration converterConfiguration) {
+class ActiveMqConnectorToJsonConverterStream extends ConverterStream {
+    ActiveMqConnectorToJsonConverterStream(ConverterConfiguration converterConfiguration) {
         super(converterConfiguration);
     }
 
