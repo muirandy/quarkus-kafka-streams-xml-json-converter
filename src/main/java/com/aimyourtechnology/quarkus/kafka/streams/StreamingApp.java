@@ -55,17 +55,18 @@ public class StreamingApp {
         converterStream.runTopology();
     }
 
-    private ConverterStream getConverterStream(ConverterConfiguration converterConfiguration) {
-        if (Mode.XML_TO_JSON.equals(converterConfiguration.mode))
-            return new XmlToJsonConverterStream(converterConfiguration);
-        return new JsonToXmlConverterStream(converterConfiguration);
-    }
-
     private void loadSomeClasses() {
         Serdes.StringSerde stringSerde = new Serdes.StringSerde();
         System.out.println(stringSerde);
     }
 
+    private ConverterStream getConverterStream(ConverterConfiguration converterConfiguration) {
+        if (Mode.XML_TO_JSON.equals(converterConfiguration.mode))
+            return new XmlToJsonConverterStream(converterConfiguration);
+        else if (Mode.JSON_TO_XML.equals(converterConfiguration.mode))
+            return new JsonToXmlConverterStream(converterConfiguration);
+        return new ActiveMqConnectorToJsonConverterStream(converterConfiguration);
+    }
 
     void onStop(@Observes ShutdownEvent event) {
         converterStream.shutdown();
