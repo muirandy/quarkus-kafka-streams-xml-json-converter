@@ -48,11 +48,17 @@ public class StreamingApp {
         converterConfiguration.outputKafkaTopic = outputKafkaTopic;
         converterConfiguration.kafkaBrokerServer = kafkaBrokerServer;
         converterConfiguration.kafkaBrokerPort = kafkaBrokerPort;
-        converterConfiguration.mode = Mode.valueOf(mode);
+        converterConfiguration.mode = Mode.modeFor(mode);
 
-        converterStream = new XmlToJsonConverterStream(converterConfiguration);
+        converterStream = getConverterStream(converterConfiguration);
 
         converterStream.runTopology();
+    }
+
+    private ConverterStream getConverterStream(ConverterConfiguration converterConfiguration) {
+        if (Mode.XML_TO_JSON.equals(converterConfiguration.mode))
+            return new XmlToJsonConverterStream(converterConfiguration);
+        return new JsonToXmlConverterStream(converterConfiguration);
     }
 
     private void loadSomeClasses() {
