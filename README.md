@@ -1,3 +1,6 @@
+# Prerequisites:
+https://quarkus.io/get-started/
+
 # Xml <-> Json Converter for Kafka Streams - Quarkus & Kafka Streams Implementation
 
 ## JVM (least beneficial!)
