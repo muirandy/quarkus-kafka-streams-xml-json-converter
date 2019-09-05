@@ -1,5 +1,6 @@
 package acceptance.converter;
 
+import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
@@ -40,9 +41,8 @@ public abstract class ConverterShould {
     private static final String ENV_KEY_KAFKA_BROKER_SERVER = "KAFKA_BROKER_SERVER";
     private static final String ENV_KEY_KAFKA_BROKER_PORT = "KAFKA_BROKER_PORT";
 
-
     @Container
-    private static final KafkaContainer KAFKA_CONTAINER = new KafkaContainer("5.2.1").withEmbeddedZookeeper()
+    protected static final KafkaContainer KAFKA_CONTAINER = new KafkaContainer("5.3.0").withEmbeddedZookeeper()
                                                                                      .waitingFor(Wait.forLogMessage(".*Launching kafka.*\\n", 1))
                                                                                      .waitingFor(Wait.forLogMessage(".*started.*\\n", 1));
     private static final String KAFKA_DESERIALIZER = "org.apache.kafka.common.serialization.StringDeserializer";
@@ -148,8 +148,22 @@ public abstract class ConverterShould {
         return consumer.poll(duration);
     }
 
+    ConsumerRecords<String, GenericRecord> pollForAvroResults() {
+        KafkaConsumer<String, GenericRecord> consumer = createKafkaAvroConsumer(getProperties());
+        Duration duration = Duration.ofSeconds(4);
+        return consumer.poll(duration);
+    }
+
     private KafkaConsumer<String, String> createKafkaConsumer(Properties props) {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList(getOutputTopic()));
+        Duration immediately = Duration.ofSeconds(0);
+        consumer.poll(immediately);
+        return consumer;
+    }
+
+    private KafkaConsumer<String, GenericRecord> createKafkaAvroConsumer(Properties props) {
+        KafkaConsumer<String, GenericRecord> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList(getOutputTopic()));
         Duration immediately = Duration.ofSeconds(0);
         consumer.poll(immediately);
@@ -218,6 +232,19 @@ public abstract class ConverterShould {
         Spliterator<ConsumerRecord<String, String>> spliterator = Spliterators.spliteratorUnknownSize(recs.iterator(), 0);
         Stream<ConsumerRecord<String, String>> consumerRecordStream = StreamSupport.stream(spliterator, false);
         Optional<ConsumerRecord<String, String>> expectedConsumerRecord = consumerRecordStream.filter(cr -> foundExpectedRecord(cr.key()))
+                                                                                              .findAny();
+        expectedConsumerRecord.ifPresent(consumerRecordConsumer);
+        if (!expectedConsumerRecord.isPresent())
+            fail("Did not find expected record");
+    }
+
+    protected void assertAvroKafkaMessage(Consumer<ConsumerRecord<String, GenericRecord>> consumerRecordConsumer) {
+        ConsumerRecords<String, GenericRecord> recs = pollForAvroResults();
+        assertFalse(recs.isEmpty());
+
+        Spliterator<ConsumerRecord<String, GenericRecord>> spliterator = Spliterators.spliteratorUnknownSize(recs.iterator(), 0);
+        Stream<ConsumerRecord<String, GenericRecord>> consumerRecordStream = StreamSupport.stream(spliterator, false);
+        Optional<ConsumerRecord<String, GenericRecord>> expectedConsumerRecord = consumerRecordStream.filter(cr -> foundExpectedRecord(cr.key()))
                                                                                               .findAny();
         expectedConsumerRecord.ifPresent(consumerRecordConsumer);
         if (!expectedConsumerRecord.isPresent())
