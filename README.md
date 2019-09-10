@@ -1,5 +1,7 @@
 # Prerequisites:
 https://quarkus.io/get-started/
+gu install native-image
+
 
 # Xml <-> Json Converter for Kafka Streams - Quarkus & Kafka Streams Implementation
 
@@ -12,6 +14,12 @@ mvn package
 ### Run
 ```
 ./macJdk.sh
+```
+## JVM Image on Docker
+### Build
+```
+mvn package
+docker build -f src/main/docker/Dockerfile.jvm2 -t quarkus/quarkus-kafka-streams-xml-json-converter
 ```
 
 ## Native Image on macOS

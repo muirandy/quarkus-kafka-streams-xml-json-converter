@@ -7,7 +7,7 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.jvm -t quarkus/quarkus-kafka-streams-xml-json-converter-jvm .
+# docker build -f src/main/docker/Dockerfile.jvm2 -t quarkus/quarkus-kafka-streams-xml-json-converter-jvm .
 #
 # Then run the container using:
 #
