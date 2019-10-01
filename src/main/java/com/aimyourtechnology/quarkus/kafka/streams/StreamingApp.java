@@ -7,11 +7,15 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
+import java.util.Optional;
 
 @ApplicationScoped
 public class StreamingApp {
     @ConfigProperty(name = "mode")
     String mode;
+
+    @ConfigProperty(name = "xmlOuterNode", defaultValue = "")
+    String xmlOuterNode;
 
     @ConfigProperty(name = "appName")
     String appName;
@@ -40,6 +44,9 @@ public class StreamingApp {
         System.out.println("kafkaBrokerPort: " + kafkaBrokerPort);
         System.out.println("inputKafkaTopic: " + inputKafkaTopic);
         System.out.println("outputKafkaTopic: " + outputKafkaTopic);
+        if (xmlOuterNode != null)
+            System.out.println("xmlOuterNode: " + xmlOuterNode);
+
 
         ConverterConfiguration converterConfiguration = new ConverterConfiguration();
         converterConfiguration.appName = appName;
@@ -48,6 +55,7 @@ public class StreamingApp {
         converterConfiguration.kafkaBrokerServer = kafkaBrokerServer;
         converterConfiguration.kafkaBrokerPort = kafkaBrokerPort;
         converterConfiguration.mode = Mode.modeFor(mode);
+        converterConfiguration.xmlOuterNode = Optional.ofNullable(xmlOuterNode);
 
         converterStream = getConverterStream(converterConfiguration);
 
