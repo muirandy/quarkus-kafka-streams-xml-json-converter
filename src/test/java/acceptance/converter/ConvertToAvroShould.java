@@ -11,6 +11,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Testcontainers
 public class ConvertToAvroShould extends ConverterShould {
 
     private static final String INPUT_TOPIC = "xmlInput";
@@ -33,7 +35,8 @@ public class ConvertToAvroShould extends ConverterShould {
     private Schema schema;
 
     @Container
-    protected GenericContainer schemaRegistryContainer = new GenericContainer("confluentinc/cp-schema-registry:5.3.0")
+    protected GenericContainer schemaRegistryContainer =
+            new GenericContainer("confluentinc/cp-schema-registry:5.3.0")
             .withNetwork(KAFKA_CONTAINER.getNetwork())
             .withNetworkAliases("schema-registry")
             .withEnv(calculateSchemaRegistryEnvProperties());
@@ -42,6 +45,7 @@ public class ConvertToAvroShould extends ConverterShould {
         Map<String, String> envProperties = new HashMap<>();
         envProperties.put("SCHEMA_REGISTRY_HOST_NAME", "schema-registry");
         envProperties.put("SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL", KAFKA_CONTAINER.getNetworkAliases().get(0) + ":2181");
+        envProperties.put("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", KAFKA_CONTAINER.getNetworkAliases().get(0) + ":9092");
         return envProperties;
     }
 
@@ -77,8 +81,11 @@ public class ConvertToAvroShould extends ConverterShould {
         Schema.Parser parser = new Schema.Parser();
 
         try {
-            Schema schema = parser.parse(new File("avro/Payment.avsc"));
+            Schema schema = parser.parse(new File(
+                    getClass().getClassLoader().getResource("avro/Payment.avsc").getFile()
+            ));
             SchemaRegistryClient schemaRegistryClient = new CachedSchemaRegistryClient(getSchemaRegistryUrl(), 20);
+
             schemaRegistryClient.register(SUBJECT, schema);
         } catch (IOException | RestClientException e) {
             throw new RuntimeException(e);
@@ -122,7 +129,8 @@ public class ConvertToAvroShould extends ConverterShould {
     }
 
     private String getSchemaRegistryUrl() {
-        return "http://schema-registry:8081";
+        String host = "http://schema-registry:" + findExposedPortForInternalPort(schemaRegistryContainer, 8081);
+        return host;
     }
 
     protected String generateRandomStringFromDouble() {

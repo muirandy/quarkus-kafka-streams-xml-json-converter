@@ -1,5 +1,7 @@
 package acceptance.converter;
 
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
@@ -42,9 +44,11 @@ public abstract class ConverterShould {
     private static final String ENV_KEY_KAFKA_BROKER_PORT = "KAFKA_BROKER_PORT";
 
     @Container
-    protected static final KafkaContainer KAFKA_CONTAINER = new KafkaContainer("5.3.0").withEmbeddedZookeeper()
-                                                                                     .waitingFor(Wait.forLogMessage(".*Launching kafka.*\\n", 1))
-                                                                                     .waitingFor(Wait.forLogMessage(".*started.*\\n", 1));
+    protected static final KafkaContainer KAFKA_CONTAINER =
+            new KafkaContainer("5.3.0").withEmbeddedZookeeper()
+                    .waitingFor(Wait.forLogMessage(".*Launching kafka.*\\n", 1))
+                    .waitingFor(Wait.forLogMessage(".*started.*\\n", 1));
+
     private static final String KAFKA_DESERIALIZER = "org.apache.kafka.common.serialization.StringDeserializer";
     private static final String KAFKA_SERIALIZER = "org.apache.kafka.common.serialization.StringSerializer";
 
@@ -249,5 +253,19 @@ public abstract class ConverterShould {
         expectedConsumerRecord.ifPresent(consumerRecordConsumer);
         if (!expectedConsumerRecord.isPresent())
             fail("Did not find expected record");
+    }
+
+    String findExposedPortForInternalPort(GenericContainer activeMqContainer, int internalPort) {
+        Map<ExposedPort, Ports.Binding[]> bindings = getActiveMqBindings(activeMqContainer);
+        ExposedPort port = bindings.keySet().stream().filter(k -> internalPort == k.getPort())
+                .findFirst().get();
+
+        Ports.Binding[] exposedBinding = bindings.get(port);
+        Ports.Binding binding = exposedBinding[0];
+        return binding.getHostPortSpec();
+    }
+
+    private Map<ExposedPort, Ports.Binding[]> getActiveMqBindings(GenericContainer activeMqContainer) {
+        return activeMqContainer.getContainerInfo().getNetworkSettings().getPorts().getBindings();
     }
 }
