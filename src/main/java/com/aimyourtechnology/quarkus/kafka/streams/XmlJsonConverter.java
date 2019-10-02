@@ -17,6 +17,11 @@ class XmlJsonConverter {
         return XML.toString(json);
     }
 
+    static String convertJsonToXmlWithXmlOuterNode(String jsonString, String xmlOuterNode) {
+        JSONObject json = new JSONObject(jsonString);
+        return XML.toString(json, xmlOuterNode);
+    }
+
     static String readXmlFieldFromJson(String field, String payload) {
         JSONObject json = new JSONObject(payload);
         return json.getString(field);

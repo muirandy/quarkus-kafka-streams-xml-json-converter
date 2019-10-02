@@ -42,7 +42,7 @@ public abstract class ConverterShould extends TestHelper {
     private static final String KAFKA_SERIALIZER = "org.apache.kafka.common.serialization.StringSerializer";
 
     @Container
-    private GenericContainer converterContainer = new GenericContainer("quarkus/quarkus-kafka-streams-xml-json-converter:latest")
+    private GenericContainer converterContainer = new GenericContainer("aytl/kafka-streams-xml-json-converter:latest")
             .withNetwork(KAFKA_CONTAINER.getNetwork())
             .withEnv(calculateEnvProperties())
             .waitingFor(Wait.forLogMessage(".*Stream manager initializing.*\\n", 1))
