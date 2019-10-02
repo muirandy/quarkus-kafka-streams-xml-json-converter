@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 import static net.javacrumbs.jsonunit.JsonAssert.assertJsonEquals;
 
-public class ConvertFromMqConnectorShould extends ConverterShould {
+public class ConvertFromMqConnectorShould extends ConverterShould  {
 
     private static final String INPUT_TOPIC = "activeMqInput";
     private static final String OUTPUT_TOPIC = "jsonOutput";

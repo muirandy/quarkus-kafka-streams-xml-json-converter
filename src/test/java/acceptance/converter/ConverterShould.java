@@ -1,20 +1,12 @@
 package acceptance.converter;
 
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.CreateTopicsOptions;
-import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.KafkaFuture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.testcontainers.containers.GenericContainer;
@@ -25,9 +17,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -39,7 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Testcontainers
-public abstract class ConverterShould {
+public abstract class ConverterShould extends TestHelper {
     private static final String ENV_KEY_KAFKA_BROKER_SERVER = "KAFKA_BROKER_SERVER";
     private static final String ENV_KEY_KAFKA_BROKER_PORT = "KAFKA_BROKER_PORT";
 
@@ -59,9 +48,6 @@ public abstract class ConverterShould {
             .waitingFor(Wait.forLogMessage(".*Stream manager initializing.*\\n", 1))
             .waitingFor(Wait.forLogMessage(".*Quarkus .* started.*\\n", 1));
 
-    protected String randomValue = generateRandomString();
-    protected String orderId = generateRandomString();
-
     private Map<String, String> calculateEnvProperties() {
         createTopics();
         Map<String, String> envProperties = new HashMap<>();
@@ -72,26 +58,8 @@ public abstract class ConverterShould {
         return envProperties;
     }
 
-    private void createTopics() {
-        AdminClient adminClient = AdminClient.create(getKafkaProperties());
 
-        CreateTopicsResult createTopicsResult = adminClient.createTopics(getTopics(), new CreateTopicsOptions().timeoutMs(1000));
-        Map<String, KafkaFuture<Void>> futureResults = createTopicsResult.values();
-        futureResults.values().forEach(f -> {
-            try {
-                f.get(1000, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (TimeoutException e) {
-                e.printStackTrace();
-            }
-        });
-        adminClient.close();
-    }
-
-    protected static Properties getKafkaProperties() {
+    protected Properties getKafkaProperties() {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_CONTAINER.getBootstrapServers());
         props.put("acks", "all");
@@ -102,14 +70,14 @@ public abstract class ConverterShould {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KAFKA_DESERIALIZER);
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "100");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, ConverterShould.class.getName());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, TestHelper.class.getName());
         return props;
     }
 
     protected List<NewTopic> getTopics() {
         return getTopicNames().stream()
-                              .map(n -> new NewTopic(n, 1, (short) 1))
-                              .collect(Collectors.toList());
+                .map(n -> new NewTopic(n, 1, (short) 1))
+                .collect(Collectors.toList());
     }
 
     protected List<String> getTopicNames() {
@@ -152,22 +120,8 @@ public abstract class ConverterShould {
         return consumer.poll(duration);
     }
 
-    ConsumerRecords<String, GenericRecord> pollForAvroResults() {
-        KafkaConsumer<String, GenericRecord> consumer = createKafkaAvroConsumer(getProperties());
-        Duration duration = Duration.ofSeconds(4);
-        return consumer.poll(duration);
-    }
-
     private KafkaConsumer<String, String> createKafkaConsumer(Properties props) {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(Collections.singletonList(getOutputTopic()));
-        Duration immediately = Duration.ofSeconds(0);
-        consumer.poll(immediately);
-        return consumer;
-    }
-
-    private KafkaConsumer<String, GenericRecord> createKafkaAvroConsumer(Properties props) {
-        KafkaConsumer<String, GenericRecord> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList(getOutputTopic()));
         Duration immediately = Duration.ofSeconds(0);
         consumer.poll(immediately);
@@ -177,6 +131,7 @@ public abstract class ConverterShould {
     protected abstract String getInputTopic();
     protected abstract String getOutputTopic();
 
+    @Override
     Properties getProperties() {
         String bootstrapServers = KAFKA_CONTAINER.getBootstrapServers();
         //        String bootstrapServers = KAFKA_CONTAINER.getNetworkAliases().get(0) + ":9092";
@@ -199,16 +154,6 @@ public abstract class ConverterShould {
         return orderId.equals(key);
     }
 
-    String createXmlMessage() {
-        return String.format(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                        "<order>" +
-                        "<orderId>%s</orderId>\n" +
-                        "<randomValue>%s</randomValue>" +
-                        "</order>", orderId, randomValue
-        );
-    }
-
     String createJsonMessage() {
         return String.format(
                 "{" +
@@ -221,14 +166,6 @@ public abstract class ConverterShould {
         );
     }
 
-    protected String generateRandomString() {
-        return String.valueOf(new Random().nextLong());
-    }
-
-    protected void writeMessageToInputTopic(Supplier<String> stringSupplier) throws ExecutionException, InterruptedException {
-        new KafkaProducer<String, String>(getProperties()).send(createKafkaProducerRecord(stringSupplier)).get();
-    }
-
     protected void assertKafkaMessage(Consumer<ConsumerRecord<String, String>> consumerRecordConsumer) {
         ConsumerRecords<String, String> recs = pollForResults();
         assertFalse(recs.isEmpty());
@@ -236,36 +173,9 @@ public abstract class ConverterShould {
         Spliterator<ConsumerRecord<String, String>> spliterator = Spliterators.spliteratorUnknownSize(recs.iterator(), 0);
         Stream<ConsumerRecord<String, String>> consumerRecordStream = StreamSupport.stream(spliterator, false);
         Optional<ConsumerRecord<String, String>> expectedConsumerRecord = consumerRecordStream.filter(cr -> foundExpectedRecord(cr.key()))
-                                                                                              .findAny();
+                .findAny();
         expectedConsumerRecord.ifPresent(consumerRecordConsumer);
         if (!expectedConsumerRecord.isPresent())
             fail("Did not find expected record");
-    }
-
-    protected void assertAvroKafkaMessage(Consumer<ConsumerRecord<String, GenericRecord>> consumerRecordConsumer) {
-        ConsumerRecords<String, GenericRecord> recs = pollForAvroResults();
-        assertFalse(recs.isEmpty());
-
-        Spliterator<ConsumerRecord<String, GenericRecord>> spliterator = Spliterators.spliteratorUnknownSize(recs.iterator(), 0);
-        Stream<ConsumerRecord<String, GenericRecord>> consumerRecordStream = StreamSupport.stream(spliterator, false);
-        Optional<ConsumerRecord<String, GenericRecord>> expectedConsumerRecord = consumerRecordStream.filter(cr -> foundExpectedRecord(cr.key()))
-                                                                                              .findAny();
-        expectedConsumerRecord.ifPresent(consumerRecordConsumer);
-        if (!expectedConsumerRecord.isPresent())
-            fail("Did not find expected record");
-    }
-
-    String findExposedPortForInternalPort(GenericContainer activeMqContainer, int internalPort) {
-        Map<ExposedPort, Ports.Binding[]> bindings = getActiveMqBindings(activeMqContainer);
-        ExposedPort port = bindings.keySet().stream().filter(k -> internalPort == k.getPort())
-                .findFirst().get();
-
-        Ports.Binding[] exposedBinding = bindings.get(port);
-        Ports.Binding binding = exposedBinding[0];
-        return binding.getHostPortSpec();
-    }
-
-    private Map<ExposedPort, Ports.Binding[]> getActiveMqBindings(GenericContainer activeMqContainer) {
-        return activeMqContainer.getContainerInfo().getNetworkSettings().getPorts().getBindings();
     }
 }
