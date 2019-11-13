@@ -1,5 +1,6 @@
 package com.aimyourtechnology.quarkus.kafka.streams;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.xmlunit.assertj.XmlAssert;
 
@@ -12,6 +13,7 @@ public class XmlAvroConverterTest {
     private String orderId = "" + new Random().nextInt();
     private String traceyId = "" + new Random().nextInt();
 
+    @Disabled
     @Test
     void convertsXmlToAvro() {
         String jsonString = XmlJsonConverter.convertXmlToJson(xmlValue());
