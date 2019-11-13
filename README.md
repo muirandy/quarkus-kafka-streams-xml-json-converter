@@ -8,7 +8,7 @@ gu install native-image
 ## JVM (least beneficial!)
 ### Build
 ```
-mvn package 
+mvn clean package 
 ```
 
 ### Run
@@ -18,14 +18,14 @@ mvn package
 ## JVM Image on Docker
 ### Build
 ```
-mvn package
+mvn clean package
 docker build -f src/main/docker/Dockerfile.jvm2 -t quarkus/quarkus-kafka-streams-xml-json-converter
 ```
 
 ## Native Image on macOS
 ### Build
 ```
-mvn package -Pnative
+mvn clean package -Pnative
 ```
 
 ### Run
@@ -36,8 +36,9 @@ mvn package -Pnative
 ## Native Image on Docker
 ### Build
 ```
-mvn package -Pnative -Dnative-image.docker-build=true
+./mvnw clean package -Pnative -Dquarkus.native.container-build=true -Dnative-image.docker-build=true
 docker build -f src/main/docker/Dockerfile.native -t quarkus/quarkus-kafka-streams-xml-json-converter .
+
 ```
 
 ### Run
