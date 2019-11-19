@@ -51,7 +51,7 @@ public class StreamingApp {
     }
 
     private void runStream() {
-        kafkaStreamsTracing = configureTracing();
+//        kafkaStreamsTracing = configureTracing();
         Topology topology = buildTopology();
         streams = new KafkaStreamsFactory(topology).createStream();
 
@@ -103,9 +103,14 @@ public class StreamingApp {
         }
 
         KafkaStreams createStream() {
-            if (zipkinEndpoint == null || zipkinEndpoint.isEmpty())
+            if (useOpenTracing())
                 return new KafkaStreams(topology, createStreamingConfig());
+            kafkaStreamsTracing = configureTracing();
             return kafkaStreamsTracing.kafkaStreams(topology, createStreamingConfig());
+        }
+
+        private boolean useOpenTracing() {
+            return zipkinEndpoint == null || zipkinEndpoint.trim().isEmpty();
         }
 
         private Properties createStreamingConfig() {

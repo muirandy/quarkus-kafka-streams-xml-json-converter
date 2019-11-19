@@ -2,6 +2,8 @@ package com.aimyourtechnology.quarkus.kafka.streams;
 
 import brave.kafka.streams.KafkaStreamsTracing;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.ValueMapper;
 
 abstract class ConverterStream {
 
@@ -14,4 +16,5 @@ abstract class ConverterStream {
     }
 
     abstract Topology buildTopology();
+
 }

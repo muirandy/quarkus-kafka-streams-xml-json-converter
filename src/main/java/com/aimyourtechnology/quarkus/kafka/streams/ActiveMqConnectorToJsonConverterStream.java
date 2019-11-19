@@ -23,8 +23,7 @@ class ActiveMqConnectorToJsonConverterStream extends ConverterStream {
         Function<String, String> mqToJson = ActiveMqConnectorToJsonConverterStream::convertMqToJson;
         ValueMapper<String, String> xmlToJsonMapper = mqString -> mqToJson.apply(mqString);
         KStream<String, String> inputStream = builder.stream(converterConfiguration.inputKafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
-        KStream<String, String> jsonStream = inputStream.transformValues(kafkaStreamsTracing.mapValues("mqXml_to_json", xmlToJsonMapper));
-        //        KStream<String, String> jsonStream = inputStream.mapValues(xmlToJsonMapper);
+        KStream<String, String> jsonStream = createJsonStream(xmlToJsonMapper, inputStream);
         jsonStream.to(converterConfiguration.outputKafkaTopic);
         return builder.build();
     }
@@ -35,6 +34,12 @@ class ActiveMqConnectorToJsonConverterStream extends ConverterStream {
 
         String json = XmlJsonConverter.convertXmlToJson(xml);
         return JsonAppender.append(json, traceyId);
+    }
+
+    private KStream<String, String> createJsonStream(ValueMapper<String, String> xmlToJsonMapper, KStream<String, String> inputStream) {
+        if (kafkaStreamsTracing == null)
+            return inputStream.mapValues(xmlToJsonMapper);
+        return inputStream.transformValues(kafkaStreamsTracing.mapValues("xml_to_json", xmlToJsonMapper));
     }
 
     private static class JsonAppender {

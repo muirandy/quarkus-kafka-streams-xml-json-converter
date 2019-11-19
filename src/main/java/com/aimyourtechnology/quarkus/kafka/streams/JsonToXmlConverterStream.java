@@ -21,8 +21,7 @@ class JsonToXmlConverterStream extends ConverterStream {
         StreamsBuilder builder = new StreamsBuilder();
         ValueMapper<String, String> jsonToXmlMapper = createValueMapper();
         KStream<String, String> inputStream = builder.stream(converterConfiguration.inputKafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
-        KStream<String, String> xmlStream = inputStream.transformValues(kafkaStreamsTracing.mapValues("json_to_xml", jsonToXmlMapper));
-        //        KStream<String, String> xmlStream = inputStream.mapValues(jsonToXmlMapper);
+        KStream<String, String> xmlStream = createXmlStream(jsonToXmlMapper, inputStream);
         xmlStream.to(converterConfiguration.outputKafkaTopic);
         return builder.build();
     }
@@ -31,6 +30,12 @@ class JsonToXmlConverterStream extends ConverterStream {
         if (shouldUseXmlOuterNode())
             return createValueMapperWithXmlOuterNode();
         return createSimpleValueWrapper();
+    }
+
+    private KStream<String, String> createXmlStream(ValueMapper<String, String> jsonToXmlMapper, KStream<String, String> inputStream) {
+        if (null == kafkaStreamsTracing)
+            return inputStream.mapValues(jsonToXmlMapper);
+        return inputStream.transformValues(kafkaStreamsTracing.mapValues("json_to_xml", jsonToXmlMapper));
     }
 
     private boolean shouldUseXmlOuterNode() {
