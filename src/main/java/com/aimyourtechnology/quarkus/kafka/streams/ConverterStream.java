@@ -1,23 +1,17 @@
 package com.aimyourtechnology.quarkus.kafka.streams;
 
+import brave.kafka.streams.KafkaStreamsTracing;
 import org.apache.kafka.streams.Topology;
 
 abstract class ConverterStream {
 
-//    private final KafkaStreamsTracing kafkaStreamsTracing;
     protected ConverterConfiguration converterConfiguration;
+    protected KafkaStreamsTracing kafkaStreamsTracing;
 
-    ConverterStream(ConverterConfiguration converterConfiguration) {
+    ConverterStream(ConverterConfiguration converterConfiguration, KafkaStreamsTracing kafkaStreamsTracing) {
         this.converterConfiguration = converterConfiguration;
-//        kafkaStreamsTracing = configureTracing();
+        this.kafkaStreamsTracing = kafkaStreamsTracing;
     }
-
-//    KafkaStreamsTracing configureTracing() {
-//        KafkaSender kafkaSender = KafkaSender.newBuilder().bootstrapServers(bootstrapServers).build();
-//        AsyncReporter<Span> asyncReporter = AsyncReporter.builder(kafkaSender).build();
-//        Tracing tracing = Tracing.newBuilder().localServiceName(converterConfiguration.appName).sampler(Sampler.ALWAYS_SAMPLE).spanReporter(asyncReporter).build();
-//        return KafkaStreamsTracing.create(tracing);
-//    }
 
     abstract Topology buildTopology();
 }

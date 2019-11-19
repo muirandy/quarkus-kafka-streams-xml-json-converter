@@ -1,5 +1,6 @@
 package com.aimyourtechnology.quarkus.kafka.streams;
 
+import brave.kafka.streams.KafkaStreamsTracing;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
@@ -11,8 +12,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 class JsonToXmlConverterStream extends ConverterStream {
-    JsonToXmlConverterStream(ConverterConfiguration converterConfiguration) {
-        super(converterConfiguration);
+    JsonToXmlConverterStream(ConverterConfiguration converterConfiguration, KafkaStreamsTracing kafkaStreamsTracing) {
+        super(converterConfiguration, kafkaStreamsTracing);
     }
 
     @Override
@@ -20,8 +21,8 @@ class JsonToXmlConverterStream extends ConverterStream {
         StreamsBuilder builder = new StreamsBuilder();
         ValueMapper<String, String> jsonToXmlMapper = createValueMapper();
         KStream<String, String> inputStream = builder.stream(converterConfiguration.inputKafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
-        //        KStream<String, String> jsonStream = inputStream.transformValues(kafkaStreamsTracing.mapValues("xml_to_json", xmlToJsonMapper));
-        KStream<String, String> xmlStream = inputStream.mapValues(jsonToXmlMapper);
+        KStream<String, String> xmlStream = inputStream.transformValues(kafkaStreamsTracing.mapValues("json_to_xml", jsonToXmlMapper));
+        //        KStream<String, String> xmlStream = inputStream.mapValues(jsonToXmlMapper);
         xmlStream.to(converterConfiguration.outputKafkaTopic);
         return builder.build();
     }

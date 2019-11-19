@@ -1,5 +1,6 @@
 package com.aimyourtechnology.quarkus.kafka.streams;
 
+import brave.kafka.streams.KafkaStreamsTracing;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
@@ -11,8 +12,8 @@ import org.json.JSONObject;
 import java.util.function.Function;
 
 class ActiveMqConnectorToJsonConverterStream extends ConverterStream {
-    ActiveMqConnectorToJsonConverterStream(ConverterConfiguration converterConfiguration) {
-        super(converterConfiguration);
+    ActiveMqConnectorToJsonConverterStream(ConverterConfiguration converterConfiguration, KafkaStreamsTracing kafkaStreamsTracing) {
+        super(converterConfiguration, kafkaStreamsTracing);
     }
 
     @Override
@@ -22,8 +23,8 @@ class ActiveMqConnectorToJsonConverterStream extends ConverterStream {
         Function<String, String> mqToJson = ActiveMqConnectorToJsonConverterStream::convertMqToJson;
         ValueMapper<String, String> xmlToJsonMapper = mqString -> mqToJson.apply(mqString);
         KStream<String, String> inputStream = builder.stream(converterConfiguration.inputKafkaTopic, Consumed.with(Serdes.String(), Serdes.String()));
-        //        KStream<String, String> jsonStream = inputStream.transformValues(kafkaStreamsTracing.mapValues("xml_to_json", xmlToJsonMapper));
-        KStream<String, String> jsonStream = inputStream.mapValues(xmlToJsonMapper);
+        KStream<String, String> jsonStream = inputStream.transformValues(kafkaStreamsTracing.mapValues("mqXml_to_json", xmlToJsonMapper));
+        //        KStream<String, String> jsonStream = inputStream.mapValues(xmlToJsonMapper);
         jsonStream.to(converterConfiguration.outputKafkaTopic);
         return builder.build();
     }

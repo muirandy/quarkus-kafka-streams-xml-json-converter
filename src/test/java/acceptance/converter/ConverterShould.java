@@ -29,8 +29,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @Testcontainers
 public abstract class ConverterShould extends TestHelper {
-    private static final String ENV_KEY_KAFKA_BROKER_SERVER = "KAFKA_BROKER_SERVER";
-    private static final String ENV_KEY_KAFKA_BROKER_PORT = "KAFKA_BROKER_PORT";
+    private static final String ENV_KEY_KAFKA_BROKER = "KAFKA_BROKERS";
 
     @Container
     protected static final KafkaContainer KAFKA_CONTAINER =
@@ -42,7 +41,7 @@ public abstract class ConverterShould extends TestHelper {
     private static final String KAFKA_SERIALIZER = "org.apache.kafka.common.serialization.StringSerializer";
 
     @Container
-    private GenericContainer converterContainer = new GenericContainer("aytl/kafka-streams-xml-json-converter:latest")
+    private GenericContainer converterContainer = new GenericContainer("quarkus/quarkus-kafka-streams-xml-json-converter:latest")
             .withNetwork(KAFKA_CONTAINER.getNetwork())
             .withEnv(calculateEnvProperties())
             .waitingFor(Wait.forLogMessage(".*Stream manager initializing.*\\n", 1))
@@ -52,8 +51,7 @@ public abstract class ConverterShould extends TestHelper {
         createTopics();
         Map<String, String> envProperties = new HashMap<>();
         String bootstrapServers = KAFKA_CONTAINER.getNetworkAliases().get(0);
-        envProperties.put(ENV_KEY_KAFKA_BROKER_SERVER, bootstrapServers);
-        envProperties.put(ENV_KEY_KAFKA_BROKER_PORT, "" + 9092);
+        envProperties.put(ENV_KEY_KAFKA_BROKER, bootstrapServers + ":9092");
         envProperties.putAll(createCustomEnvProperties());
         return envProperties;
     }
